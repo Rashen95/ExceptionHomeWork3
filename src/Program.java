@@ -66,7 +66,7 @@ class PeopleAdder {
         int index_data;
         String data = null;
         int index_phone_number;
-        long phone_number = 0;
+        long phone_number;
         int index_firstname;
         int index_lastname;
         int index_surname;
@@ -103,6 +103,7 @@ class PeopleAdder {
                 phone_number = Long.parseLong(user_input_massive[index_phone_number]);
                 user_input_massive[index_phone_number] = "null";
             }
+            System.out.printf("%s %d", data, phone_number);
         }
         if (flag) {
             // Тут прописываем поиск строки с F или M
@@ -110,7 +111,6 @@ class PeopleAdder {
         if (flag) {
             // Тут прописываем последнее - запись ФИО
         }
-        System.out.printf("%s %d", data, phone_number);
     }
 }
 
