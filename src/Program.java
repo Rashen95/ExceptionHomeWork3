@@ -1,4 +1,6 @@
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Напишите приложение, которое будет запрашивать у пользователя следующие данные в произвольном порядке, разделенные пробелом:
@@ -23,7 +25,7 @@ import java.util.Scanner;
 
 public class Program {
     public static void main(String[] args) {
-        new Menu().MainMenu();
+        new Menu().mainMenu();
     }
 }
 
@@ -31,7 +33,7 @@ class Menu {
     /**
      * Основное меню
      */
-    public void MainMenu() {
+    public void mainMenu() {
         boolean flag = false;
         Scanner s = new Scanner(System.in);
         while (!flag) {
@@ -39,7 +41,12 @@ class Menu {
             String change = s.nextLine().replaceAll(" ", "");
             if (change.equals("1")) {
                 flag = true;
-                PeopleAdder.add();
+                try {
+                    PeopleAdder.add();
+                } catch (NoDateException | NoPhoneException e) {
+                    System.out.println(e.getMessage());
+                    mainMenu();
+                }
             } else if (change.equals("2")) {
                 flag = true;
                 System.out.println(UserInterface.exitProgramMessage());
@@ -54,19 +61,56 @@ class PeopleAdder {
     /**
      * Добавление человека в базу
      */
-    public static void add() {
+    public static void add() throws NoDateException, NoPhoneException {
+        boolean flag = true;
+        int index_data;
+        String data = null;
+        int index_phone_number;
+        long phone_number = 0;
+        int index_firstname;
+        int index_lastname;
+        int index_surname;
+        int index_gender;
         System.out.println(UserInterface.giveMeInfo());
         String user_input = UserInput.input();
         user_input = Parser.pars(user_input);
         String[] user_input_massive = user_input.split(" ");
         try {
-            Validator.examination(user_input_massive);
-        } catch (ExceptionWrongAmountOfData e) {
+            Validator.amountOfDataExamination(user_input_massive);
+        } catch (WrongAmountOfDataException e) {
             System.out.println("<><><><><><><><><><><><><><><><><><><><><><><><><><><>");
             System.out.printf("Количество данных должно быть равно 6, а вы ввели %d\n", e.getAmountOfData());
             System.out.println("<><><><><><><><><><><><><><><><><><><><><><><><><><><>");
-            new Menu().MainMenu();
+            new Menu().mainMenu();
+            flag = false;
         }
+        if (flag) {
+            index_data = Validator.dataSearch(user_input_massive);
+            if (index_data == 10) {
+                throw new NoDateException();
+            }
+            else {
+                data = user_input_massive[index_data];
+                user_input_massive[index_data] = "null";
+            }
+        }
+        if (flag) {
+            index_phone_number = Validator.phoneSearch(user_input_massive);
+            if (index_phone_number == 10) {
+                throw new NoPhoneException();
+            }
+            else {
+                phone_number = Long.parseLong(user_input_massive[index_phone_number]);
+                user_input_massive[index_phone_number] = "null";
+            }
+        }
+        if (flag) {
+            // Тут прописываем поиск строки с F или M
+        }
+        if (flag) {
+            // Тут прописываем последнее - запись ФИО
+        }
+        System.out.printf("%s %d", data, phone_number);
     }
 }
 
@@ -75,12 +119,41 @@ class Validator {
      * Проверка введенных данных на валидность
      *
      * @param s массив строк
-     * @throws ExceptionWrongAmountOfData ошибка неверного количества данных
+     * @throws WrongAmountOfDataException ошибка неверного количества данных
      */
-    public static void examination(String[] s) throws ExceptionWrongAmountOfData {
+    public static void amountOfDataExamination(String[] s) throws WrongAmountOfDataException {
         if (s.length != 6) {
-            throw new ExceptionWrongAmountOfData("Неверное количество введенных данных", s.length);
+            if (s.length == 1 && s[0].equals("")) {
+                throw new WrongAmountOfDataException(0);
+            }
+            throw new WrongAmountOfDataException(s.length);
         }
+    }
+
+    public static int dataSearch(String[] s) {
+        String regex = "^[0-9][0-9]\\.[0-9][0-9]\\.[0-9][0-9][0-9][0-9]$";
+        int index_data = 10;
+        Pattern pattern = Pattern.compile(regex);
+        for (int i = 0; i < s.length; i++) {
+            Matcher matcher = pattern.matcher(s[i]);
+            if (matcher.matches()) {
+                index_data = i;
+            }
+        }
+        return index_data;
+    }
+
+    public static int phoneSearch(String[] s) {
+        String regex = "^8[1-9][1-9][1-9][1-9][1-9][1-9][1-9][1-9][1-9][1-9]$";
+        int index_phone_number = 10;
+        Pattern pattern = Pattern.compile(regex);
+        for (int i = 0; i < s.length; i++) {
+            Matcher matcher = pattern.matcher(s[i]);
+            if (matcher.matches()) {
+                index_phone_number = i;
+            }
+        }
+        return index_phone_number;
     }
 }
 
@@ -132,7 +205,7 @@ class UserInterface {
 
     public static String firstMenu() {
         return """
-                
+                                
                 1. Добавить нового человека в базу
                 2. Завершить работу приложения
                 Выберите интересующий пункт меню:""";
@@ -145,15 +218,27 @@ abstract class MyException extends Exception {
     }
 }
 
-class ExceptionWrongAmountOfData extends MyException {
+class WrongAmountOfDataException extends MyException {
     private final int amountOfData;
 
     public int getAmountOfData() {
         return amountOfData;
     }
 
-    public ExceptionWrongAmountOfData(String message, int amountOfData) {
-        super(message);
+    public WrongAmountOfDataException(int amountOfData) {
+        super("Неверное количество введенных данных");
         this.amountOfData = amountOfData;
+    }
+}
+
+class NoDateException extends MyException {
+    public NoDateException() {
+        super("В введенных данных отсутствует дата вашего рождения");
+    }
+}
+
+class NoPhoneException extends MyException {
+    public NoPhoneException() {
+        super("В введенных данных отсутствует номер телефона");
     }
 }
