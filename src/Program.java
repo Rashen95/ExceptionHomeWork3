@@ -1,3 +1,5 @@
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -42,8 +44,8 @@ class Menu {
             if (change.equals("1")) {
                 flag = true;
                 try {
-                    PeopleAdder.add();
-                } catch (NoDateException | NoPhoneException e) {
+                    PeopleAdder.searcher();
+                } catch (NoDateException | NoPhoneException | NoGenderException | NoFIOException e) {
                     System.out.println(e.getMessage());
                     mainMenu();
                 }
@@ -61,16 +63,20 @@ class PeopleAdder {
     /**
      * Добавление человека в базу
      */
-    public static void add() throws NoDateException, NoPhoneException {
+    public static void searcher() throws NoDateException, NoPhoneException, NoGenderException, NoFIOException {
         boolean flag = true;
         int index_data;
-        String data = null;
+        String data;
         int index_phone_number;
         long phone_number;
         int index_firstname;
+        String firstname;
         int index_lastname;
+        String lastname;
         int index_surname;
+        String surname;
         int index_gender;
+        String gender;
         System.out.println(UserInterface.giveMeInfo());
         String user_input = UserInput.input();
         user_input = Parser.pars(user_input);
@@ -85,31 +91,72 @@ class PeopleAdder {
             flag = false;
         }
         if (flag) {
+            // Поиск даты
             index_data = Validator.dataSearch(user_input_massive);
             if (index_data == 10) {
                 throw new NoDateException();
-            }
-            else {
+            } else {
                 data = user_input_massive[index_data];
-                user_input_massive[index_data] = "null";
+                user_input_massive[index_data] = "0";
             }
-        }
-        if (flag) {
+
+            // Поиск номера телефона
             index_phone_number = Validator.phoneSearch(user_input_massive);
             if (index_phone_number == 10) {
                 throw new NoPhoneException();
-            }
-            else {
+            } else {
                 phone_number = Long.parseLong(user_input_massive[index_phone_number]);
-                user_input_massive[index_phone_number] = "null";
+                user_input_massive[index_phone_number] = "0";
             }
-            System.out.printf("%s %d", data, phone_number);
+
+            // Поиск пола
+            index_gender = Validator.genderSearch(user_input_massive);
+            if (index_gender == 10) {
+                throw new NoGenderException();
+            } else {
+                gender = user_input_massive[index_gender];
+                user_input_massive[index_gender] = "0";
+            }
+
+            // Поиск Фамилии
+            index_lastname = Validator.lastNameSearch(user_input_massive);
+            if (index_lastname == 10) {
+                throw new NoFIOException();
+            } else {
+                lastname = user_input_massive[index_lastname];
+                user_input_massive[index_lastname] = "0";
+            }
+
+            // Поиск Имени
+            index_firstname = Validator.firstNameSearch(user_input_massive);
+            if (index_firstname == 10) {
+                throw new NoFIOException();
+            } else {
+                firstname = user_input_massive[index_firstname];
+                user_input_massive[index_firstname] = "0";
+            }
+
+            // Поиск Отчества
+            index_surname = Validator.surNameSearch(user_input_massive);
+            if (index_surname == 10) {
+                throw new NoFIOException();
+            } else {
+                surname = user_input_massive[index_surname];
+                user_input_massive[index_surname] = "0";
+            }
+            String[] full_info = new String[]{lastname, firstname, surname, data, Long.toString(phone_number), gender};
+            writer(full_info);
         }
-        if (flag) {
-            // Тут прописываем поиск строки с F или M
-        }
-        if (flag) {
-            // Тут прописываем последнее - запись ФИО
+    }
+
+    public static void writer(String[] info) {
+        try (FileWriter writer = new FileWriter(String.format("%s.txt", info[0]), true)) {
+            writer.write(String.format("%s %s %s %s %s %s\n", info[0], info[1], info[2], info[3], info[4], info[5]));
+            writer.flush();
+            System.out.printf("%s %s %s успешно добавлен в базу\n", info[0], info[1], info[2]);
+            new Menu().mainMenu();
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
         }
     }
 }
@@ -154,6 +201,58 @@ class Validator {
             }
         }
         return index_phone_number;
+    }
+
+    public static int genderSearch(String[] s) {
+        int index_gender = 10;
+        for (int i = 0; i < s.length; i++) {
+            if (s[i].equalsIgnoreCase("f") || s[i].equalsIgnoreCase("m")) {
+                index_gender = i;
+            }
+        }
+        return index_gender;
+    }
+
+    public static int lastNameSearch(String[] s) {
+        String regex = "^[A-Za-zА-Яа-я]+$";
+        int index_lastname = 10;
+        Pattern pattern = Pattern.compile(regex);
+        for (int i = 0; i < s.length; i++) {
+            Matcher matcher = pattern.matcher(s[i]);
+            if (matcher.matches()) {
+                index_lastname = i;
+                return index_lastname;
+            }
+        }
+        return index_lastname;
+    }
+
+    public static int firstNameSearch(String[] s) {
+        String regex = "^[A-Za-zА-Яа-я]+$";
+        int index_firstname = 10;
+        Pattern pattern = Pattern.compile(regex);
+        for (int i = 0; i < s.length; i++) {
+            Matcher matcher = pattern.matcher(s[i]);
+            if (matcher.matches()) {
+                index_firstname = i;
+                return index_firstname;
+            }
+        }
+        return index_firstname;
+    }
+
+    public static int surNameSearch(String[] s) {
+        String regex = "^[A-Za-zА-Яа-я]+$";
+        int index_surname = 10;
+        Pattern pattern = Pattern.compile(regex);
+        for (int i = 0; i < s.length; i++) {
+            Matcher matcher = pattern.matcher(s[i]);
+            if (matcher.matches()) {
+                index_surname = i;
+                return index_surname;
+            }
+        }
+        return index_surname;
     }
 }
 
@@ -240,5 +339,17 @@ class NoDateException extends MyException {
 class NoPhoneException extends MyException {
     public NoPhoneException() {
         super("В введенных данных отсутствует номер телефона");
+    }
+}
+
+class NoGenderException extends MyException {
+    public NoGenderException() {
+        super("В введенных данных отсутствует пол");
+    }
+}
+
+class NoFIOException extends MyException {
+    public NoFIOException() {
+        super("Некорректно введены ФИО");
     }
 }
