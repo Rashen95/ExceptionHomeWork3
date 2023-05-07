@@ -47,6 +47,8 @@ class Menu {
                     PeopleAdder.searcher();
                 } catch (NoDateException | NoPhoneException | NoGenderException | NoFIOException e) {
                     System.out.println(e.getMessage());
+                }
+                finally {
                     mainMenu();
                 }
             } else if (change.equals("2")) {
@@ -61,7 +63,7 @@ class Menu {
 
 class PeopleAdder {
     /**
-     * Добавление человека в базу
+     * Поиск всех необходимых данных в строке и передача массива данных для записи в файл
      */
     public static void searcher() throws NoDateException, NoPhoneException, NoGenderException, NoFIOException {
         boolean flag = true;
@@ -87,7 +89,6 @@ class PeopleAdder {
             System.out.println("<><><><><><><><><><><><><><><><><><><><><><><><><><><>");
             System.out.printf("Количество данных должно быть равно 6, а вы ввели %d\n", e.getAmountOfData());
             System.out.println("<><><><><><><><><><><><><><><><><><><><><><><><><><><>");
-            new Menu().mainMenu();
             flag = false;
         }
         if (flag) {
@@ -149,12 +150,14 @@ class PeopleAdder {
         }
     }
 
+    /**
+     * Запись полученных ВАЛИДНЫХ данных в файл
+     * */
     public static void writer(String[] info) {
         try (FileWriter writer = new FileWriter(String.format("%s.txt", info[0]), true)) {
             writer.write(String.format("%s %s %s %s %s %s\n", info[0], info[1], info[2], info[3], info[4], info[5]));
             writer.flush();
             System.out.printf("%s %s %s успешно добавлен в базу\n", info[0], info[1], info[2]);
-            new Menu().mainMenu();
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
@@ -177,6 +180,11 @@ class Validator {
         }
     }
 
+    /**
+     * Находит в массиве дату, соответствующую необходимому формату
+     * @param s переданный массив с информацией
+     * @return Индекс даты в массиве
+     */
     public static int dataSearch(String[] s) {
         String regex = "^[0-9][0-9]\\.[0-9][0-9]\\.[0-9][0-9][0-9][0-9]$";
         int index_data = 10;
@@ -190,6 +198,11 @@ class Validator {
         return index_data;
     }
 
+    /**
+     * Находит в массиве номер телефона, соответствующий необходимому формату
+     * @param s переданный массив с информацией
+     * @return Индекс номера телефона в массиве
+     */
     public static int phoneSearch(String[] s) {
         String regex = "^8[1-9][1-9][1-9][1-9][1-9][1-9][1-9][1-9][1-9][1-9]$";
         int index_phone_number = 10;
@@ -203,6 +216,11 @@ class Validator {
         return index_phone_number;
     }
 
+    /**
+     * Находит в массиве пол человека
+     * @param s переданный массив с информацией
+     * @return Индекс пола человека в массиве
+     */
     public static int genderSearch(String[] s) {
         int index_gender = 10;
         for (int i = 0; i < s.length; i++) {
@@ -213,6 +231,11 @@ class Validator {
         return index_gender;
     }
 
+    /**
+     * Находит в массиве Фамилию
+     * @param s переданный массив с информацией
+     * @return Индекс фамилии в массиве
+     */
     public static int lastNameSearch(String[] s) {
         String regex = "^[A-Za-zА-Яа-я]+$";
         int index_lastname = 10;
@@ -227,6 +250,11 @@ class Validator {
         return index_lastname;
     }
 
+    /**
+     * Находит в массиве Имя
+     * @param s переданный массив с информацией
+     * @return Индекс имени в массиве
+     */
     public static int firstNameSearch(String[] s) {
         String regex = "^[A-Za-zА-Яа-я]+$";
         int index_firstname = 10;
@@ -241,6 +269,11 @@ class Validator {
         return index_firstname;
     }
 
+    /**
+     * Находит в массиве Отчество
+     * @param s переданный массив с информацией
+     * @return Индекс отчества в массиве
+     */
     public static int surNameSearch(String[] s) {
         String regex = "^[A-Za-zА-Яа-я]+$";
         int index_surname = 10;
